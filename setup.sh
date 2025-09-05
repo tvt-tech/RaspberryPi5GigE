@@ -9,7 +9,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 # --- 1. Setup dependencies ---
 echo "Installing dependencies..."
 sudo apt update
-sudo apt install -y arv-tools \
+sudo apt install -y aravis-tools \
                      libgstreamer1.0-dev \
                      gstreamer1.0-plugins-base \
                      gstreamer1.0-plugins-good \
