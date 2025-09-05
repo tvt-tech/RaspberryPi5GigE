@@ -22,20 +22,41 @@ sudo apt install -y aravis-tools \
 
 echo "Installation done."
 
+# # --- 2. Network setup ---
+# echo "Setting up network interface ${INTERFACE}..."
+
+# # Add static IP-address to configuration file
+# echo "
+# interface ${INTERFACE}
+# static ip_address=${IP_ADDRESS}
+# " | sudo tee -a /etc/dhcpcd.conf > /dev/null
+
+# # Clean up existing IP-addresses
+# sudo ip addr flush dev ${INTERFACE}
+
+# # Assign new static IP-address (for current session)
+# sudo ip addr add ${IP_ADDRESS} dev ${INTERFACE}
+
 # --- 2. Network setup ---
-echo "Setting up network interface ${INTERFACE}..."
+echo "Setting static IP for interface ${INTERFACE}..."
 
-# Add static IP-address to configuration file
-echo "
-interface ${INTERFACE}
-static ip_address=${IP_ADDRESS}
-" | sudo tee -a /etc/dhcpcd.conf > /dev/null
+# Check exist connection
+CON_NAME=$(nmcli -t -f NAME connection show | grep "^${INTERFACE}$")
 
-# Clean up existing IP-addresses
-sudo ip addr flush dev ${INTERFACE}
+if [ -z "$CON_NAME" ]; then
+    echo "No existing connection for ${INTERFACE}, creating one..."
+    sudo nmcli connection add type ethernet ifname "${INTERFACE}" con-name "${INTERFACE}"
+    CON_NAME="${INTERFACE}"
+fi
 
-# Assign new static IP-address (for current session)
-sudo ip addr add ${IP_ADDRESS} dev ${INTERFACE}
+# Set static IP
+sudo nmcli connection modify "$CON_NAME" ipv4.addresses "$IP_ADDRESS" \
+    ipv4.gateway "10.0.0.1" ipv4.dns "10.0.0.1 8.8.8.8" ipv4.method manual
+
+# Activate
+sudo nmcli connection up "$CON_NAME"
+
+echo "Static IP $IP_ADDRESS applied to ${INTERFACE}."
 
 # --- 2.1. Check connection ---
 echo "Checking device connection ${PING_TARGET}..."
