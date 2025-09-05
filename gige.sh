@@ -33,7 +33,7 @@ TARGET_HEIGHT=$(( (TARGET_HEIGHT / 2) * 2 ))
 echo "Calculated target size: ${TARGET_WIDTH}x${TARGET_HEIGHT}"
 
 # Fill screen with black before stream start
-sudo cat /dev/zero > /dev/fb0
+cat /dev/zero > /dev/fb0
 
 # Launch GStreamer
 gst-launch-1.0 -v aravissrc \
@@ -44,12 +44,13 @@ gst-launch-1.0 -v aravissrc \
     ! videoconvert \
     ! videoscale method=bilinear add-borders=true \
     ! video/x-raw,width=$TARGET_WIDTH,height=$TARGET_HEIGHT \
-    ! fbdevsink \
-    t. \
-    ! queue \
-    ! videoconvert \
-    ! video/x-raw,format=NV12 \
-    ! v4l2h264enc \
-    ! h264parse \
-    ! mp4mux \
-    ! filesink location=output.mp4
+    ! fbdevsink 
+    # \
+    # t. \
+    # ! queue \
+    # ! videoconvert \
+    # ! video/x-raw,format=NV12 \
+    # ! v4l2h264enc \
+    # ! h264parse \
+    # ! mp4mux \
+    # ! filesink location=output.mp4

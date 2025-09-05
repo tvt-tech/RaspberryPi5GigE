@@ -19,7 +19,7 @@ show_no_signal() {
         return
     fi
 
-    sudo cat /dev/zero > /dev/fb0
+    cat /dev/zero > /dev/fb0
 
     gst-launch-1.0 -v videotestsrc pattern=no-signal \
     ! videoscale \
@@ -36,7 +36,7 @@ stop_no_signal() {
 
 # --- Main watchdog loop ---
 while true; do
-    if pgrep -f "$STREAM_SCRIPT" > /dev/null; then
+    if pgrep -f "aravissrc" > /dev/null; then
         stop_no_signal
         echo "Stream gige.sh working. Monitoring..."
         sleep $RETRY_TIMEOUT
