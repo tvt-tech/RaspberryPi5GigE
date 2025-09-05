@@ -4,12 +4,14 @@ This project provides a reliable, automated system for capturing, displaying, an
 
 ## **Table of Contents**
 
-1. [Features](https://www.google.com/search?q=%23features)  
-2. [Requirements](https://www.google.com/search?q=%23requirements)  
-3. [Project Structure](https://www.google.com/search?q=%23project-structure)  
-4. [Installation](https://www.google.com/search?q=%23installation)  
-5. [Usage](https://www.google.com/search?q=%23usage)  
-6. [Configuration](https://www.google.com/search?q=%23configuration)
+- [**Gige Camera Video Monitoring and Recording System on Raspberry Pi**](#gige-camera-video-monitoring-and-recording-system-on-raspberry-pi)
+  - [**Table of Contents**](#table-of-contents)
+  - [**Features**](#features)
+  - [**Requirements**](#requirements)
+  - [**Project Structure**](#project-structure)
+  - [**Installation**](#installation)
+  - [**Usage**](#usage)
+  - [**Configuration**](#configuration)
 
 ## **Features**
 
