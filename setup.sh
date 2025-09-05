@@ -1,10 +1,8 @@
 #!/bin/bash
 
 # --- Include configuration ---
-source ./config.sh
-
-# Detect path to start.sh
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+source "${SCRIPT_DIR}/config.sh"
 
 # Detect current user and home directory
 CURRENT_USER=$(whoami)
@@ -28,7 +26,6 @@ echo "Installation done."
 echo "Setting up network interface ${INTERFACE}..."
 
 # Add static IP-address to configuration file
-# This will make the setting persistent after reboot
 echo "
 interface ${INTERFACE}
 static ip_address=${IP_ADDRESS}
@@ -41,7 +38,6 @@ sudo ip addr flush dev ${INTERFACE}
 sudo ip addr add ${IP_ADDRESS} dev ${INTERFACE}
 
 # --- 2.1. Check connection ---
-# Check device connection
 echo "Checking device connection ${PING_TARGET}..."
 ping -c 1 ${PING_TARGET}
 
@@ -66,7 +62,7 @@ User=${CURRENT_USER}
 Group=video
 Restart=always
 RestartSec=5s
-WorkingDirectory=${CURRENT_USER_HOME}
+WorkingDirectory=${SCRIPT_DIR}
 ExecStart=/bin/bash ${SCRIPT_DIR}/start.sh
 
 [Install]

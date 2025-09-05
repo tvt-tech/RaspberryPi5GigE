@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # --- Include configuration ---
-source ./config.sh
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+source "${SCRIPT_DIR}/config.sh"
 
 # Detect screen resolution just once
 SCREEN_SIZE=$(cat /sys/class/graphics/fb0/virtual_size)
@@ -9,7 +10,7 @@ SCREEN_WIDTH=$(echo $SCREEN_SIZE | cut -d',' -f1)
 SCREEN_HEIGHT=$(echo $SCREEN_SIZE | cut -d',' -f2)
 
 # Stream setup
-STREAM_SCRIPT="./gige.sh"
+STREAM_SCRIPT="${SCRIPT_DIR}/gige.sh"
 RETRY_TIMEOUT=5  # Delay before next launch attempt (in seconds)
 
 # --- Function to display "NO SIGNAL" screensaver ---
