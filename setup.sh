@@ -5,8 +5,6 @@ source ./config.sh
 
 # Detect path to start.sh
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-SERVICE_FILE="/etc/systemd/system/gige-stream.service"
-SERVICE_NAME="gige-stream.service"
 
 # Detect current user and home directory
 CURRENT_USER=$(whoami)
