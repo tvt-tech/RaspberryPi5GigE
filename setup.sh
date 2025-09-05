@@ -5,6 +5,12 @@ source ./config.sh
 
 # Detect path to start.sh
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+SERVICE_FILE="/etc/systemd/system/gige-stream.service"
+SERVICE_NAME="gige-stream.service"
+
+# Detect current user and home directory
+CURRENT_USER=$(whoami)
+CURRENT_USER_HOME=$(eval echo "~$CURRENT_USER")
 
 # --- 1. Setup dependencies ---
 echo "Installing dependencies..."
@@ -51,26 +57,23 @@ fi
 echo "Creating and enabling systemd service..."
 
 # Using 'here document' to write service content to the file
-sudo tee "${SERVICE_FILE}" > /dev/null << 'EOF'
+sudo tee "${SERVICE_FILE}" > /dev/null << EOF
 [Unit]
 Description=Gige Camera Stream Monitoring Service
 After=network.target
 
 [Service]
 Type=simple
-User=pi
+User=${CURRENT_USER}
 Group=video
 Restart=always
 RestartSec=5s
-WorkingDirectory=/home/pi/
-ExecStart=/bin/bash /home/pi/start.sh
+WorkingDirectory=${CURRENT_USER_HOME}
+ExecStart=/bin/bash ${SCRIPT_DIR}/start.sh
 
 [Install]
 WantedBy=multi-user.target
 EOF
-
-# Updating paths in the service-file, if script is in other place
-sudo sed -i "s|/home/pi|${SCRIPT_DIR}|g" "${SERVICE_FILE}"
 
 # Reloading systemd
 sudo systemctl daemon-reload
@@ -78,6 +81,4 @@ sudo systemctl daemon-reload
 # Enable and immediately restart the service
 sudo systemctl enable --now "${SERVICE_NAME}"
 
-echo "Service ${SERVICE_NAME} creation and start success."
-echo "Setup script done. Check the service status with command:"
-echo "sudo systemctl status ${SERVICE_NAME}"
+echo "Service ${SERVICE_NAME} creation and start done."
