@@ -71,9 +71,11 @@ Type=simple
 User=${CURRENT_USER}
 Group=video
 Restart=always
-RestartSec=5s
+RestartSec=1s
 WorkingDirectory=${SCRIPT_DIR}
 ExecStart=/bin/bash ${SCRIPT_DIR}/gige.sh
+ExecStop=/usr/bin/pkill -f "/bin/bash ${SCRIPT_DIR}/gige.sh"
+TimeoutStopSec=5
 Environment="XDG_RUNTIME_DIR=/run/user/${CURRENT_USER_ID}"
 
 [Install]
