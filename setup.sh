@@ -1,35 +1,34 @@
 #!/bin/bash
+set -e
 
 # --- Include configuration ---
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 source "${SCRIPT_DIR}/config.sh"
 
-# Detect current user and home directory
 CURRENT_USER=$(whoami)
-CURRENT_USER_HOME=$(eval echo "~$CURRENT_USER")
-
-# --- Get the current user's ID ---
-CURRENT_USER_ID=$(id -u "${CURRENT_USER}")
 
 # --- 1. Setup dependencies ---
 echo "Installing dependencies..."
 sudo apt update
 sudo apt install -y aravis-tools \
-                     aravis-tools-cli \
-                     cage \
-                     libgstreamer1.0-dev \
-                     gstreamer1.0-plugins-base \
-                     gstreamer1.0-plugins-good \
-                     gstreamer1.0-plugins-ugly \
-                     gstreamer1.0-plugins-bad \
-                     gstreamer1.0-libav \
-                     gstreamer1.0-tools
-
+                    aravis-tools-cli \
+                    cage \
+                    libgstreamer1.0-dev \
+                    gstreamer1.0-plugins-base \
+                    gstreamer1.0-plugins-good \
+                    gstreamer1.0-plugins-ugly \
+                    gstreamer1.0-plugins-bad \
+                    gstreamer1.0-libav \
+                    gstreamer1.0-tools \
+                    seatd
 echo "Installation done."
 
 # --- 1.1. Set permissions for display access ---
-echo "Adding user '${CURRENT_USER}' to 'video' and 'render' groups for display access..."
-sudo usermod -aG video,render "${CURRENT_USER}"
+echo "Adding user '${CURRENT_USER}' to 'video', 'render' and 'input' groups..."
+sudo usermod -aG video,render,input "${CURRENT_USER}"
+
+# Enable seatd
+sudo systemctl enable --now seatd.service
 
 # --- 2. Network setup ---
 echo "Setting static IP for interface ${INTERFACE}..."
@@ -65,33 +64,31 @@ fi
 # --- 3. Creating and enabling systemd service ---
 echo "Creating and enabling systemd service..."
 
-# Enable user linger to allow the service to run on boot without a user session
-sudo loginctl enable-linger "${CURRENT_USER}"
 
-# Using 'here document' to write service content to the file
-sudo tee "/etc/systemd/user/${SERVICE_NAME}" > /dev/null << EOF
+sudo tee "/etc/systemd/system/${SERVICE_NAME}" > /dev/null << EOF
 [Unit]
-Description=Gige Camera Stream Service
-After=network.target
+Description=GigE Camera Stream (Cage Wayland session)
+After=network-online.target seatd.service
+Requires=seatd.service
+Wants=network-online.target
 
 [Service]
-Type=simple
+User=${CURRENT_USER}
 Group=video
-Restart=always
-RestartSec=1s
 WorkingDirectory=${SCRIPT_DIR}
-ExecStart=/bin/bash ${SCRIPT_DIR}/gige.sh
-ExecStop=/usr/bin/pkill -f "/bin/bash ${SCRIPT_DIR}/gige.sh"
-TimeoutStopSec=5
+TTYPath=/dev/tty1
+StandardInput=tty
+StandardOutput=journal
+StandardError=journal
+ExecStart=/usr/bin/cage -s -- ${SCRIPT_DIR}/gige.sh
+Restart=always
+RestartSec=5
 
 [Install]
-WantedBy=default.target
+WantedBy=multi-user.target
 EOF
 
-# Reloading systemd user daemon
-sudo systemctl --user daemon-reload
-
-# Enable and immediately start the service
-sudo systemctl --user enable --now "${SERVICE_NAME}"
+sudo systemctl daemon-reload
+sudo systemctl enable --now "${SERVICE_NAME}"
 
 echo "Service ${SERVICE_NAME} creation and start done."
