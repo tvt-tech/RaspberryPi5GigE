@@ -7,6 +7,7 @@ source "${SCRIPT_DIR}/config.sh"
 # Detect current user and home directory
 CURRENT_USER=$(whoami)
 CURRENT_USER_HOME=$(eval echo "~$CURRENT_USER")
+
 # --- Get the current user's ID ---
 CURRENT_USER_ID=$(id -u "${CURRENT_USER}")
 
@@ -40,7 +41,7 @@ fi
 
 # Set static IP
 sudo nmcli connection modify "$CON_NAME" ipv4.addresses "$IP_ADDRESS" \
-    ipv4.gateway "10.0.0.1" ipv4.dns "10.0.0.1 8.8.8.8" ipv4.method manual
+    ipv4.method manual
 
 # Activate
 sudo nmcli connection up "$CON_NAME"
@@ -63,12 +64,12 @@ echo "Creating and enabling systemd service..."
 # Using 'here document' to write service content to the file
 sudo tee "${SERVICE_FILE}" > /dev/null << EOF
 [Unit]
-Description=Gige Camera Stream Service
+Description=Gige Camera Stream Monitoring Service
 After=network.target
 
 [Service]
 Type=simple
-User=${CURRENT_USER}
+User=root
 Group=video
 Restart=always
 RestartSec=1s
@@ -76,7 +77,6 @@ WorkingDirectory=${SCRIPT_DIR}
 ExecStart=/bin/bash ${SCRIPT_DIR}/gige.sh
 ExecStop=/usr/bin/pkill -f "/bin/bash ${SCRIPT_DIR}/gige.sh"
 TimeoutStopSec=5
-Environment="XDG_RUNTIME_DIR=/run/user/${CURRENT_USER_ID}"
 
 [Install]
 WantedBy=multi-user.target
