@@ -65,15 +65,17 @@ fi
 # --- 3. Creating and enabling systemd service ---
 echo "Creating and enabling systemd service..."
 
+# Enable user linger to allow the service to run on boot without a user session
+sudo loginctl enable-linger "${CURRENT_USER}"
+
 # Using 'here document' to write service content to the file
-sudo tee "${SERVICE_FILE}" > /dev/null << EOF
+sudo tee "/etc/systemd/user/${SERVICE_NAME}" > /dev/null << EOF
 [Unit]
 Description=Gige Camera Stream Service
 After=network.target
 
 [Service]
 Type=simple
-User=${CURRENT_USER}
 Group=video
 Restart=always
 RestartSec=1s
@@ -81,17 +83,15 @@ WorkingDirectory=${SCRIPT_DIR}
 ExecStart=/bin/bash ${SCRIPT_DIR}/gige.sh
 ExecStop=/usr/bin/pkill -f "/bin/bash ${SCRIPT_DIR}/gige.sh"
 TimeoutStopSec=5
-Environment="XDG_RUNTIME_DIR=/run/user/${CURRENT_USER_ID}"
-Environment="WLR_BACKENDS=drm"
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
 EOF
 
-# Reloading systemd
-sudo systemctl daemon-reload
+# Reloading systemd user daemon
+sudo systemctl --user daemon-reload
 
-# Enable and immediately restart the service
-sudo systemctl enable --now "${SERVICE_NAME}"
+# Enable and immediately start the service
+sudo systemctl --user enable --now "${SERVICE_NAME}"
 
 echo "Service ${SERVICE_NAME} creation and start done."
