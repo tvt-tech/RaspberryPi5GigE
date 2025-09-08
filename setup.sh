@@ -1,13 +1,12 @@
 #!/bin/bash
 set -e
 
-# --- Include configuration ---
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 source "${SCRIPT_DIR}/config.sh"
 
 CURRENT_USER=$(whoami)
 
-# --- 1. Setup dependencies ---
+# --- 1. Install dependencies ---
 echo "Installing dependencies..."
 sudo apt update
 sudo apt install -y aravis-tools \
@@ -23,72 +22,51 @@ sudo apt install -y aravis-tools \
                     seatd
 echo "Installation done."
 
-# --- 1.1. Set permissions for display access ---
-echo "Adding user '${CURRENT_USER}' to 'video', 'render' and 'input' groups..."
+# --- 1.1 Add user to video/render/input groups ---
+echo "Adding user '${CURRENT_USER}' to video/render/input groups..."
 sudo usermod -aG video,render,input "${CURRENT_USER}"
-
-# Enable seatd
-sudo systemctl enable --now seatd.service
 
 # --- 2. Network setup ---
 echo "Setting static IP for interface ${INTERFACE}..."
-
-# Check exist connection
 CON_NAME=$(nmcli -t -f NAME connection show | grep "^${INTERFACE}$")
-
 if [ -z "$CON_NAME" ]; then
     echo "No existing connection for ${INTERFACE}, creating one..."
     sudo nmcli connection add type ethernet ifname "${INTERFACE}" con-name "${INTERFACE}"
     CON_NAME="${INTERFACE}"
 fi
-
-# Set static IP
-sudo nmcli connection modify "$CON_NAME" ipv4.addresses "$IP_ADDRESS" \
-    ipv4.method manual
-
-# Activate
+sudo nmcli connection modify "$CON_NAME" ipv4.addresses "$IP_ADDRESS" ipv4.method manual
 sudo nmcli connection up "$CON_NAME"
-
 echo "Static IP $IP_ADDRESS applied to ${INTERFACE}."
 
-# --- 2.1. Check connection ---
 echo "Checking device connection ${PING_TARGET}..."
-ping -c 1 ${PING_TARGET}
+ping -c 1 ${PING_TARGET} && echo "Ping success." || echo "Ping error."
 
-if [ $? -eq 0 ]; then
-    echo "Ping success. Network correctly set."
-else
-    echo "Ping error. Check connection and IP-address."
-fi
+# --- 3. Enable user linger for systemd user service ---
+sudo loginctl enable-linger "${CURRENT_USER}"
 
-# --- 3. Creating and enabling systemd service ---
-echo "Creating and enabling systemd service..."
+# --- 4. Create user-level systemd service ---
+USER_SYSTEMD_DIR="${HOME}/.config/systemd/user"
+mkdir -p "${USER_SYSTEMD_DIR}"
 
-
-sudo tee "/etc/systemd/system/${SERVICE_NAME}" > /dev/null << EOF
+tee "${USER_SYSTEMD_DIR}/${SERVICE_NAME}" > /dev/null << EOF
 [Unit]
 Description=GigE Camera Stream (Cage Wayland session)
-After=network-online.target seatd.service
-Requires=seatd.service
-Wants=network-online.target
+After=network.target seatd.service
 
 [Service]
-User=${CURRENT_USER}
-Group=video
-WorkingDirectory=${SCRIPT_DIR}
-TTYPath=/dev/tty1
-StandardInput=tty
-StandardOutput=journal
-StandardError=journal
+Type=simple
 ExecStart=/usr/bin/cage -s -- ${SCRIPT_DIR}/gige.sh
 Restart=always
 RestartSec=5
+Environment="XDG_RUNTIME_DIR=/run/user/%U"
+WorkingDirectory=${SCRIPT_DIR}
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
 EOF
 
-sudo systemctl daemon-reload
-sudo systemctl enable --now "${SERVICE_NAME}"
+# Reload user systemd and enable service
+systemctl --user daemon-reload
+systemctl --user enable --now "${SERVICE_NAME}"
 
-echo "Service ${SERVICE_NAME} creation and start done."
+echo "Setup complete. Service '${SERVICE_NAME}' will start automatically after user login."

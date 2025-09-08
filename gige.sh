@@ -32,7 +32,6 @@ if ping -c 1 -W 1 "${PING_TARGET}" > /dev/null 2>&1; then
 
     echo "Calculated target size: ${TARGET_WIDTH}x${TARGET_HEIGHT}"
 
-    # Run GStreamer directly (cage already wraps this script)
     exec gst-launch-1.0 -v aravissrc \
         ! video/x-raw,format=GRAY8,width=$SOURCE_WIDTH,height=$SOURCE_HEIGHT,framerate=25/1 \
         ! tee name=t \
@@ -41,7 +40,6 @@ if ping -c 1 -W 1 "${PING_TARGET}" > /dev/null 2>&1; then
             ! waylandsink
 else
     echo "Camera not found. Displaying 'NO SIGNAL' screen."
-
     exec gst-launch-1.0 -v videotestsrc pattern=black \
         ! videoconvert \
         ! textoverlay text="NO SIGNAL" font-desc="Sans 48" valignment=center \
