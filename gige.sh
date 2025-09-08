@@ -26,7 +26,7 @@ while true; do
         TARGET_WIDTH=$(( (TARGET_WIDTH / 2) * 2 ))
         TARGET_HEIGHT=$(( (TARGET_HEIGHT / 2) * 2 ))
 
-        # Запускаємо GStreamer для камери
+        # Launch GStreamer for the camera
         gst-launch-1.0 -v aravissrc \
             ! video/x-raw,format=GRAY8,width=$SOURCE_WIDTH,height=$SOURCE_HEIGHT,framerate=25/1 \
             ! videoconvert \
@@ -39,6 +39,6 @@ while true; do
             ! waylandsink
     fi
 
-    # Чекаємо кілька секунд перед наступною перевіркою
+    # Wait for next attempt
     sleep 5
 done
