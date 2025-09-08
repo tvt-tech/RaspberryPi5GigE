@@ -27,6 +27,10 @@ sudo apt install -y aravis-tools \
 
 echo "Installation done."
 
+# --- 1.1. Set permissions for display access ---
+echo "Adding user '${CURRENT_USER}' to 'video' and 'render' groups for display access..."
+sudo usermod -aG video,render "${CURRENT_USER}"
+
 # --- 2. Network setup ---
 echo "Setting static IP for interface ${INTERFACE}..."
 
@@ -64,12 +68,12 @@ echo "Creating and enabling systemd service..."
 # Using 'here document' to write service content to the file
 sudo tee "${SERVICE_FILE}" > /dev/null << EOF
 [Unit]
-Description=Gige Camera Stream Monitoring Service
+Description=Gige Camera Stream Service
 After=network.target
 
 [Service]
 Type=simple
-User=root
+User=${CURRENT_USER}
 Group=video
 Restart=always
 RestartSec=1s
@@ -77,6 +81,7 @@ WorkingDirectory=${SCRIPT_DIR}
 ExecStart=/bin/bash ${SCRIPT_DIR}/gige.sh
 ExecStop=/usr/bin/pkill -f "/bin/bash ${SCRIPT_DIR}/gige.sh"
 TimeoutStopSec=5
+Environment="XDG_RUNTIME_DIR=/run/user/${CURRENT_USER_ID}"
 
 [Install]
 WantedBy=multi-user.target
