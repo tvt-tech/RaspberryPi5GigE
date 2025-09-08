@@ -57,7 +57,7 @@ After=network.target seatd.service
 Type=simple
 ExecStart=/usr/bin/cage -s -- ${SCRIPT_DIR}/gige.sh
 Restart=always
-RestartSec=5
+RestartSec=1
 Environment="XDG_RUNTIME_DIR=/run/user/%U"
 WorkingDirectory=${SCRIPT_DIR}
 

@@ -116,5 +116,5 @@ while true; do
     fi
     
     # Wait for next attempt
-    sleep 5
+    sleep 1
 done
