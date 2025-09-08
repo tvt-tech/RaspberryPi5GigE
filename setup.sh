@@ -7,6 +7,8 @@ source "${SCRIPT_DIR}/config.sh"
 # Detect current user and home directory
 CURRENT_USER=$(whoami)
 CURRENT_USER_HOME=$(eval echo "~$CURRENT_USER")
+# --- Get the current user's ID ---
+CURRENT_USER_ID=$(id -u "${CURRENT_USER}")
 
 # --- 1. Setup dependencies ---
 echo "Installing dependencies..."
@@ -72,6 +74,7 @@ Restart=always
 RestartSec=5s
 WorkingDirectory=${SCRIPT_DIR}
 ExecStart=/bin/bash ${SCRIPT_DIR}/gige.sh
+Environment="XDG_RUNTIME_DIR=/run/user/${CURRENT_USER_ID}"
 
 [Install]
 WantedBy=multi-user.target
