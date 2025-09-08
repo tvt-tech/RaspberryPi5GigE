@@ -82,6 +82,7 @@ ExecStart=/bin/bash ${SCRIPT_DIR}/gige.sh
 ExecStop=/usr/bin/pkill -f "/bin/bash ${SCRIPT_DIR}/gige.sh"
 TimeoutStopSec=5
 Environment="XDG_RUNTIME_DIR=/run/user/${CURRENT_USER_ID}"
+Environment="WLR_BACKENDS=drm"
 
 [Install]
 WantedBy=multi-user.target
