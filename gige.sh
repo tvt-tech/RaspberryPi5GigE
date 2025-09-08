@@ -27,13 +27,13 @@ while true; do
         TARGET_HEIGHT=$(( (TARGET_HEIGHT / 2) * 2 ))
 
         # Launch GStreamer for the camera
-        gst-launch-1.0 -v aravissrc \
+        exec gst-launch-1.0 -v aravissrc \
             ! video/x-raw,format=GRAY8,width=$SOURCE_WIDTH,height=$SOURCE_HEIGHT,framerate=25/1 \
             ! videoconvert \
             ! waylandsink
     else
         echo "$(date) - Camera not found. Showing NO SIGNAL."
-        gst-launch-1.0 -v videotestsrc pattern=black \
+        exec gst-launch-1.0 -v videotestsrc pattern=black \
             ! videoconvert \
             ! textoverlay text="NO SIGNAL" font-desc="Sans 48" valignment=center \
             ! waylandsink
