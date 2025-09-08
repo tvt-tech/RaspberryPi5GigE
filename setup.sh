@@ -12,30 +12,17 @@ CURRENT_USER_HOME=$(eval echo "~$CURRENT_USER")
 echo "Installing dependencies..."
 sudo apt update
 sudo apt install -y aravis-tools \
+                     aravis-tools-cli \
+                     cage \
                      libgstreamer1.0-dev \
                      gstreamer1.0-plugins-base \
                      gstreamer1.0-plugins-good \
                      gstreamer1.0-plugins-ugly \
                      gstreamer1.0-plugins-bad \
-                     libgtk-3-dev \
+                     gstreamer1.0-libav \
                      gstreamer1.0-tools
 
 echo "Installation done."
-
-# # --- 2. Network setup ---
-# echo "Setting up network interface ${INTERFACE}..."
-
-# # Add static IP-address to configuration file
-# echo "
-# interface ${INTERFACE}
-# static ip_address=${IP_ADDRESS}
-# " | sudo tee -a /etc/dhcpcd.conf > /dev/null
-
-# # Clean up existing IP-addresses
-# sudo ip addr flush dev ${INTERFACE}
-
-# # Assign new static IP-address (for current session)
-# sudo ip addr add ${IP_ADDRESS} dev ${INTERFACE}
 
 # --- 2. Network setup ---
 echo "Setting static IP for interface ${INTERFACE}..."
@@ -74,7 +61,7 @@ echo "Creating and enabling systemd service..."
 # Using 'here document' to write service content to the file
 sudo tee "${SERVICE_FILE}" > /dev/null << EOF
 [Unit]
-Description=Gige Camera Stream Monitoring Service
+Description=Gige Camera Stream Service
 After=network.target
 
 [Service]
@@ -84,7 +71,7 @@ Group=video
 Restart=always
 RestartSec=5s
 WorkingDirectory=${SCRIPT_DIR}
-ExecStart=/bin/bash ${SCRIPT_DIR}/start.sh
+ExecStart=/bin/bash ${SCRIPT_DIR}/gige.sh
 
 [Install]
 WantedBy=multi-user.target
