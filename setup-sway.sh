@@ -54,7 +54,7 @@ cp /etc/sway/config ~/.config/sway/config
 # Comment out sway default wallpaper line
 sed -i 's|^\(output \* bg .*\)|#\1|' ~/.config/sway/config
 
-# Disable the default bar by commenting it out if not already
+# Disable the default bar by commenting it out
 sed -i '/^bar {/,/^}/ s/^/#/' ~/.config/sway/config
 
 # Ensure custom settings are appended once
@@ -85,12 +85,12 @@ Requires=seatd.service
 
 [Service]
 Type=simple
+ExecStartPre=/usr/bin/pkill -f 'sway|waylandsink' || true
 ExecStartPre=/bin/rm -rf /run/user/%U/sway-ipc.* 2>/dev/null || true
 ExecStart=/usr/bin/sway --unsupported-gpu
-# ExecStart=/usr/bin/sway
-ExecStop=/usr/bin/swaymsg exit || true
+ExecStop=/usr/bin/pkill -f 'sway|waylandsink' || true
 ExecStopPost=/bin/rm -rf /run/user/%U/sway-ipc.* 2>/dev/null || true
-Restart=always
+Restart=on-failure
 RestartSec=2
 Environment="XDG_RUNTIME_DIR=/run/user/%U"
 WorkingDirectory=%h
