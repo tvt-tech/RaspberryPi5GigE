@@ -57,6 +57,7 @@ start_no_signal() {
         stop_current_stream
         
         gst-launch-1.0 -v videotestsrc pattern=black \
+            ! video/x-raw,width=$SCREEN_WIDTH,height=$SCREEN_HEIGHT,framerate=25/1 \
             ! videoconvert \
             ! textoverlay text="NO SIGNAL" font-desc="Sans 48" valignment=center \
             ! waylandsink sync=false &
