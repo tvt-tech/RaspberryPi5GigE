@@ -1,99 +1,72 @@
 #!/bin/bash
+set -e
 
-# --- Include configuration ---
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 source "${SCRIPT_DIR}/config.sh"
 
-# Detect current user and home directory
 CURRENT_USER=$(whoami)
-CURRENT_USER_HOME=$(eval echo "~$CURRENT_USER")
 
-# --- 1. Setup dependencies ---
+# --- 1. Install dependencies ---
 echo "Installing dependencies..."
 sudo apt update
 sudo apt install -y aravis-tools \
-                     libgstreamer1.0-dev \
-                     gstreamer1.0-plugins-base \
-                     gstreamer1.0-plugins-good \
-                     gstreamer1.0-plugins-ugly \
-                     gstreamer1.0-plugins-bad \
-                     libgtk-3-dev \
-                     gstreamer1.0-tools
-
+                    aravis-tools-cli \
+                    cage \
+                    libgstreamer1.0-dev \
+                    gstreamer1.0-plugins-base \
+                    gstreamer1.0-plugins-good \
+                    gstreamer1.0-plugins-ugly \
+                    gstreamer1.0-plugins-bad \
+                    gstreamer1.0-libav \
+                    gstreamer1.0-tools \
+                    seatd
 echo "Installation done."
 
-# # --- 2. Network setup ---
-# echo "Setting up network interface ${INTERFACE}..."
-
-# # Add static IP-address to configuration file
-# echo "
-# interface ${INTERFACE}
-# static ip_address=${IP_ADDRESS}
-# " | sudo tee -a /etc/dhcpcd.conf > /dev/null
-
-# # Clean up existing IP-addresses
-# sudo ip addr flush dev ${INTERFACE}
-
-# # Assign new static IP-address (for current session)
-# sudo ip addr add ${IP_ADDRESS} dev ${INTERFACE}
+# --- 1.1 Add user to video/render/input groups ---
+echo "Adding user '${CURRENT_USER}' to video/render/input groups..."
+sudo usermod -aG video,render,input "${CURRENT_USER}"
 
 # --- 2. Network setup ---
 echo "Setting static IP for interface ${INTERFACE}..."
-
-# Check exist connection
 CON_NAME=$(nmcli -t -f NAME connection show | grep "^${INTERFACE}$")
-
 if [ -z "$CON_NAME" ]; then
     echo "No existing connection for ${INTERFACE}, creating one..."
     sudo nmcli connection add type ethernet ifname "${INTERFACE}" con-name "${INTERFACE}"
     CON_NAME="${INTERFACE}"
 fi
-
-# Set static IP
-sudo nmcli connection modify "$CON_NAME" ipv4.addresses "$IP_ADDRESS" \
-    ipv4.gateway "10.0.0.1" ipv4.dns "10.0.0.1 8.8.8.8" ipv4.method manual
-
-# Activate
+sudo nmcli connection modify "$CON_NAME" ipv4.addresses "$IP_ADDRESS" ipv4.method manual
 sudo nmcli connection up "$CON_NAME"
-
 echo "Static IP $IP_ADDRESS applied to ${INTERFACE}."
 
-# --- 2.1. Check connection ---
 echo "Checking device connection ${PING_TARGET}..."
-ping -c 1 ${PING_TARGET}
+ping -c 1 ${PING_TARGET} && echo "Ping success." || echo "Ping error."
 
-if [ $? -eq 0 ]; then
-    echo "Ping success. Network correctly set."
-else
-    echo "Ping error. Check connection and IP-address."
-fi
+# --- 3. Enable user linger for systemd user service ---
+sudo loginctl enable-linger "${CURRENT_USER}"
 
-# --- 3. Creating and enabling systemd service ---
-echo "Creating and enabling systemd service..."
+# --- 4. Create user-level systemd service ---
+USER_SYSTEMD_DIR="${HOME}/.config/systemd/user"
+mkdir -p "${USER_SYSTEMD_DIR}"
 
-# Using 'here document' to write service content to the file
-sudo tee "${SERVICE_FILE}" > /dev/null << EOF
+tee "${USER_SYSTEMD_DIR}/${SERVICE_NAME}" > /dev/null << EOF
 [Unit]
-Description=Gige Camera Stream Monitoring Service
-After=network.target
+Description=GigE Camera Stream (Cage Wayland session)
+After=network.target seatd.service
 
 [Service]
 Type=simple
-User=${CURRENT_USER}
-Group=video
+ExecStart=/usr/bin/cage -s -- ${SCRIPT_DIR}/gige.sh
 Restart=always
-RestartSec=5s
+RestartSec=1
+Environment="XDG_RUNTIME_DIR=/run/user/%U"
 WorkingDirectory=${SCRIPT_DIR}
-ExecStart=/bin/bash ${SCRIPT_DIR}/start.sh
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
 EOF
 
-# Reloading systemd
-sudo systemctl daemon-reload
+# Reload user systemd and enable service
+systemctl --user daemon-reload
+systemctl --user enable --now "${SERVICE_NAME}"
 
-# Enable and immediately restart the service
-sudo systemctl enable --now "${SERVICE_NAME}"
-
-echo "Service ${SERVICE_NAME} creation and start done."
+echo "Setup complete. Service '${SERVICE_NAME}' will start automatically after user login."

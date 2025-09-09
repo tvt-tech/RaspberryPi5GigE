@@ -30,14 +30,13 @@ This project provides a reliable, automated system for capturing, displaying, an
 ## **Project Structure**
 
 * `setup.sh`: The initial setup script. It installs necessary software, configures the network, and creates the systemd service.  
-* `start.sh`: The watchdog script. It monitors the stream's status and restarts it in case of failure.  
 * `gige.sh`: The main script that launches the GStreamer pipeline for video capture, display, and recording.  
 * `config.sh`: The configuration file containing all the project settings.  
 * `gige-stream.service`: The systemd service file. It is created automatically by the setup.sh script.
 
 ## **Installation**
 
-1. Copy all the files (setup.sh, start.sh, gige.sh, config.sh) to a single directory on your Raspberry Pi.  
+1. Copy all the files (setup.sh, gige.sh, config.sh) to a single directory on your Raspberry Pi.  
 
 2. Grant execute permissions to the scripts:  
   ```bash
