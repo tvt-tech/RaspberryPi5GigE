@@ -81,7 +81,7 @@ tee "${USER_SYSTEMD_DIR}/${SERVICE_NAME}" > /dev/null << EOF
 [Unit]
 Description=GigE Camera Stream (Sway Wayland session)
 After=graphical.target network.target seatd.service
-Requires=seatd.service
+# Requires=seatd.service
 
 [Service]
 Type=simple
