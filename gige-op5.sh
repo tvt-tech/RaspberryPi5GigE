@@ -47,8 +47,8 @@ start_camera_stream() {
             ! waylandsink sync=false \
         t. ! queue \
             ! videoconvert \
-            ! x264enc bitrate=7000 speed-preset=fast tune=zerolatency \
-            ! h264parse \
+            ! v4l2h265enc bitrate=5000 \
+            ! h265parse \
             ! splitmuxsink location="output_%02d.mp4" max-size-time=600000000000 &
         
         GSTREAMER_PID=$!
